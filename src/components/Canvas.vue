@@ -29,12 +29,25 @@ export default {
       reader: null,
     };
   },
+  props: {
+    image: {
+      type: Object,
+    },
+    selectedColor: {
+      type: String,
+      required: true,
+    },
+  },
   mounted() {
     this.init();
+    if (this.image) {
+      this.load(null, this.image);
+    }
   },
   methods: {
     init() {
       this.data = {
+        id: this.id(),
         canvasData: null,
         lines: [],
       };
@@ -51,14 +64,19 @@ export default {
       this.canvas = document.getElementById('canvas-canvas');
       this.ctx = this.canvas.getContext('2d');
 
-      const canvasEl = document.querySelector('.canvas');
-
-      this.canvas.width = canvasEl.clientWidth;
-      this.canvas.height = canvasEl.clientHeight;
-
       this.canvas.addEventListener('mousedown', this.startDraw, false);
       this.canvas.addEventListener('mousemove', this.draw, false);
       this.canvas.addEventListener('mouseup', this.endDraw, false);
+
+      window.addEventListener('resize', this.resizeCanvas, false);
+      this.resizeCanvas();
+    },
+    resizeCanvas() {
+      const canvasEl = document.querySelector('.canvas');
+      this.canvas.width = canvasEl.clientWidth;
+      this.canvas.height = canvasEl.clientHeight;
+
+      this.load(null, this.image);
     },
     startDraw() {
       this.isActive = true;
@@ -72,14 +90,14 @@ export default {
 
       this.plots.push({x: x, y: y});
 
-      this.drawOnCanvas();
+      this.drawOnCanvas(this.selectedColor);
     },
     endDraw() {
       this.isActive = false;
       this.saveDraw();
       this.plots = [];
     },
-    drawOnCanvas() {
+    drawOnCanvas(color) {
       const plots = cloneDeep(this.plots);
       this.ctx.beginPath();
 
@@ -89,7 +107,7 @@ export default {
         this.ctx.lineTo(plot.x, plot.y);
       }
       
-      this.ctx.strokeStyle = "#FF0000";
+      this.ctx.strokeStyle = color;
       this.ctx.lineWidth = 1;
 
       this.ctx.stroke();
@@ -106,8 +124,10 @@ export default {
 
       for (let line of this.data.lines) {
         this.plots = line.plots;
-        this.drawOnCanvas();
+        this.drawOnCanvas(line.color);
+        this.$emit('colorchange', line.color);
       }
+      this.save();
     },
     loadFile() {
       const upload = document.querySelector('#hidden-upload');
@@ -131,7 +151,7 @@ export default {
       }
 
       this.data.canvasData = this.canvas.toDataURL();
-      this.data.lines.push({ plots: this.plots });
+      this.data.lines.push({ color: this.selectedColor, plots: this.plots });
       console.log(this.data);
     },
     save() {
@@ -142,7 +162,7 @@ export default {
       const data = JSON.stringify(this.data);
       const file = new Blob([data], {type: 'application/json'});
       a.href = URL.createObjectURL(file);
-      a.download = 'drawing1.insc';
+      a.download = 'drawing1.json';
       a.click();
     },
     clear() {

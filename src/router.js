@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-import Home from './views/Home.vue';
+import Dashboard from './views/Dashboard.vue';
 
 Vue.use(Router);
 
@@ -10,16 +10,17 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: Home,
+      name: 'dashboard',
+      component: Dashboard,
     },
     {
-      path: '/canvas',
-      name: 'canvas',
+      path: '/editor',
+      name: 'editor',
+      props: route => ({ image: route.params.image }),
       // route level code-splitting
-      // this generates a separate chunk (canvas.[hash].js) for this route
+      // this generates a separate chunk (editor.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
-      component: () => import(/* webpackChunkName: "canvas" */ './views/Canvas.vue'),
+      component: () => import(/* webpackChunkName: "editor" */ './views/Editor.vue'),
     },
   ],
 });
